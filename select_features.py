@@ -1,3 +1,10 @@
+"""
+usage: python select_features.py
+
+No command line arguments.  This program expects to find two data files in a
+subdirectory called 'data'.
+"""
+
 import numpy as np
 
 import sklearn.svm
