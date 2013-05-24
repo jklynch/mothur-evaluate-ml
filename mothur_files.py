@@ -27,11 +27,11 @@ def load_shared_file(shared_data_file_path):
     print('shared data shape: {}'.format(shared_data.shape))
     print('otu column names length: {}'.format(len(otu_column_names)))
 
-    print(column_names[0:5])
-    print(label_names[0:5])
-    print(group_names[0:5])
+    #print(column_names[0:5])
+    #print(label_names[0:5])
+    #print(group_names[0:5])
     
-    print(shared_data[0:5, 0:5])
+    #print(shared_data[0:5, 0:5])
 
     return label_names, group_names, otu_column_names, shared_data
 
@@ -45,6 +45,6 @@ def load_design_file(design_file_path):
             group_names.append(group)
             partition_names.append(partition)
 
-    print(group_names[0:5])
-    print(partition_names[0:5])
+    #print(group_names[0:5])
+    #print(partition_names[0:5])
     return group_names, partition_names
