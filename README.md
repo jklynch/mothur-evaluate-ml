@@ -1,3 +1,3 @@
-gsoc2013-code-challenge
+mothur-evaluate-ml
 =========
 
