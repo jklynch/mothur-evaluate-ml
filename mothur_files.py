@@ -5,6 +5,7 @@ import numpy as np
 
 
 def load_shared_file(shared_data_file_path):
+    # read the shared file once to get the column names, label names, and group names
     with open(shared_data_file_path) as shared_data_file:
         column_names = shared_data_file.readline().strip().split()
         label_names = []
@@ -14,10 +15,11 @@ def load_shared_file(shared_data_file_path):
             label_names.append(label)
             group_names.append(group)
     
-    column_count = len(column_names);
+    column_count = len(column_names)
     print('read {} columns'.format(column_count))
 
-    # read the OTU frequency data
+    # read the shared file again to get OTU frequency data
+    # skip the first row and the first three columns
     shared_data = np.genfromtxt(
         shared_data_file_path,
         skip_header=1,
@@ -27,24 +29,20 @@ def load_shared_file(shared_data_file_path):
     print('shared data shape: {}'.format(shared_data.shape))
     print('otu column names length: {}'.format(len(otu_column_names)))
 
-    #print(column_names[0:5])
-    #print(label_names[0:5])
-    #print(group_names[0:5])
-    
-    #print(shared_data[0:5, 0:5])
-
+    # python lists: label_names, group_names, otu_column_names
+    # shared_data is a numpy array
     return label_names, group_names, otu_column_names, shared_data
 
 
 def load_design_file(design_file_path):
     with open(design_file_path) as design_file:
         group_names = []
-        partition_names = []
+        treatment_names = []
         for line in design_file:
             group, partition = line.strip().split()
             group_names.append(group)
-            partition_names.append(partition)
+            treatment_names.append(partition)
 
     #print(group_names[0:5])
-    #print(partition_names[0:5])
-    return group_names, partition_names
+    #print(treatment_names[0:5])
+    return group_names, treatment_names
