@@ -19,30 +19,19 @@ import mothur_files
 
 def evaluate_svm():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("shared_file_path")
-    argparser.add_argument("design_file_path")
+    argparser.add_argument("shared_file_path", help="<path to shared file>")
+    argparser.add_argument("design_file_path", help="<path to design file>")
     args = argparser.parse_args()
 
     print("shared file path: {0.shared_file_path}".format(args))
     print("design file path: {0.design_file_path}".format(args))
 
-    label_names, shared_group_names, otu_column_names, shared_data = mothur_files.load_shared_file(args.shared_file_path)
-    design_group_name_for_row, treatment_name_for_row = mothur_files.load_design_file(args.design_file_path)
-
-    # how many classes are there in the design file?
-    # map each class name to a (floating point) number
-    # we will want the class numbers in a NumPy array
-    class_names = {x for x in treatment_name_for_row}
-    print("class names: {}".format(class_names))
-    class_name_to_number = {name:float(n) for n,name in enumerate(class_names)}
-    print("class names and numbers: {}".format(class_name_to_number))
-    class_number_for_row = np.array(
-        [class_name_to_number[class_name] for class_name in treatment_name_for_row]
-    )
+    shared_data = mothur_files.load_shared_file(args.shared_file_path)
+    design_data = mothur_files.load_design_file(args.design_file_path)
 
     scaler = sklearn.preprocessing.StandardScaler()
     # the scaler returns a copy by default
-    X = scaler.fit_transform(shared_data)
+    X = scaler.fit_transform(shared_data.otu_frequency)
     # X and class_number_for_row are ready
 
     C_range = 10.0 ** np.arange(-3, 3)
@@ -50,12 +39,12 @@ def evaluate_svm():
     degree_range = np.arange(1, 4)
     coef0_range = np.arange(-3.0, 3.0)
 
-    support_vector_machine(X, class_number_for_row, "linear", dict(C=C_range))
-    support_vector_machine(X, class_number_for_row, "rbf", dict(gamma=gamma_range, C=C_range))
-    support_vector_machine(X, class_number_for_row, "poly", dict(C=C_range, degree=degree_range, coef0=coef0_range))
-    support_vector_machine(X, class_number_for_row, "sigmoid", dict(C=C_range, coef0=coef0_range))
+    support_vector_machine(X, design_data.class_number_for_row[:,0], "linear", dict(C=C_range))
+    support_vector_machine(X, design_data.class_number_for_row[:,0], "rbf", dict(gamma=gamma_range, C=C_range))
+    support_vector_machine(X, design_data.class_number_for_row[:,0], "poly", dict(C=C_range, degree=degree_range, coef0=coef0_range))
+    support_vector_machine(X, design_data.class_number_for_row[:,0], "sigmoid", dict(C=C_range, coef0=coef0_range))
 
-    #evaluate_linear_svm(X, class_number_for_row)
+    #evaluate_linear_svm(X, design_data.class_number_for_row)
 
 
 def evaluate_linear_svm(X, y):

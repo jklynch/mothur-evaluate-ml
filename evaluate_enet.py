@@ -26,31 +26,15 @@ def evaluate_enet():
     print("shared file path: {0.shared_file_path}".format(args))
     print("design file path: {0.design_file_path}".format(args))
 
-    label_names, shared_group_names, otu_column_names, shared_data = mothur_files.load_shared_file(args.shared_file_path)
-    design_group_name_for_row, treatment_name_for_row = mothur_files.load_design_file(args.design_file_path)
-
-    # how many classes are there in the design file?
-    # map each class name to a (floating point) number
-    # we will want the class numbers in a NumPy array
-    class_names = {x for x in treatment_name_for_row}
-    print("class names: {}".format(class_names))
-    class_name_to_number = {name:float(n) for n,name in enumerate(class_names)}
-    print("class names and numbers: {}".format(class_name_to_number))
-    class_number_for_row = np.array(
-        [class_name_to_number[class_name] for class_name in treatment_name_for_row]
-    )
+    shared_data = mothur_files.load_shared_file(args.shared_file_path)
+    design_data = mothur_files.load_design_file(args.design_file_path)
 
     scaler = sklearn.preprocessing.StandardScaler()
     # the scaler returns a copy by default
-    X = scaler.fit_transform(shared_data)
+    X = scaler.fit_transform(shared_data.otu_frequency)
     # X and class_number_for_row are ready
 
-    C_range = 10.0 ** np.arange(-3, 3)
-    gamma_range = 10.0 ** np.arange(-5, -3)
-    degree_range = np.arange(1, 4)
-    coef0_range = np.arange(-3.0, 3.0)
-
-    elastic_net(X, class_number_for_row, otu_column_names)
+    elastic_net(X, design_data.class_number_for_row[:,0], shared_data.otu_column_names)
 
 
 """
@@ -60,7 +44,8 @@ l1_ratio and alpha are determined by cross validation.
 def elastic_net(X, y, otu_column_names):
    
     ##############################################################################
-    n_train = 400
+    n_train = int( 4.0/5.0 * y.shape[0] )
+    print('n_train: {}'.format(n_train))
     best_model = None
     best_model_score = 0.0
     # I could not get ElasticNetCV to choose the best l1_ratio from a list
@@ -68,11 +53,12 @@ def elastic_net(X, y, otu_column_names):
     for l1_ratio in [.1, .2, .3, .4]:
         model = sklearn.linear_model.ElasticNetCV(
             l1_ratio=l1_ratio,
-            cv=sklearn.cross_validation.StratifiedKFold(y[n_train:], 10),
+            cv=sklearn.cross_validation.StratifiedKFold(y[n_train:], 3),
             verbose=False
         ).fit(X[n_train:, :], y[n_train:])
         # I think using model.score was the wrong way to go
-        # model_score = model.score(X[:n_train,:], y[:n_train])
+        model_score_xx = model.score(X[:n_train,:], y[:n_train])
+        print('built-in model.score: {}'.format(model_score_xx))
         test_prediction = model.predict(X[:n_train])
         test_classification = test_prediction.round()
         test_classification_correct = (y[:n_train] == test_classification)
@@ -87,7 +73,7 @@ def elastic_net(X, y, otu_column_names):
         print('feature ranking by elastic net:')
         print('   OTU      Rank')
         enet_top_feature_list = get_enet_top_features(model)
-        for n, (feature_ndx, rank) in enumerate(enet_top_feature_list[:50]):
+        for n, (feature_ndx, rank) in enumerate(enet_top_feature_list[:10]):
             print('{:2d} {} {:4.2f}'.format(n, otu_column_names[feature_ndx], rank))
     
     print('best l1_ratio: {}'.format(best_model.l1_ratio_))
