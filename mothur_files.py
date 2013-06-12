@@ -46,6 +46,7 @@ class design_data_group:
         self.treatment_names = []
         self.class_names = None
         self.class_name_to_number = None
+        self.class_number_to_name = None
         self.class_number_for_row = None
 
 
@@ -64,6 +65,7 @@ def load_design_file(design_file_path):
     design_data.class_names = {x for x in design_data.treatment_names}
     print("class names: {}".format(design_data.class_names))
     design_data.class_name_to_number = {name:float(n) for n,name in enumerate(design_data.class_names)}
+    design_data.class_number_to_name = {float(n):name for n,name in enumerate(design_data.class_names)}
     print("class names and numbers: {}".format(design_data.class_name_to_number))
     # specify ndmin=2 and transpose() to get a column vector
     design_data.class_number_for_row = np.array(
