@@ -1,3 +1,7 @@
+%
+% combine shared and design files on the command line
+% with mothur_files.py
+%
 function evaluate_lmnn()
 
 %echo off;
