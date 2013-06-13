@@ -2,7 +2,7 @@
 % combine shared and design files on the command line
 % with mothur_files.py
 %
-function evaluate_lmnn()
+function evaluate_lmnn(input_file_path)
 
 %echo off;
 %clear all;
@@ -10,7 +10,8 @@ function evaluate_lmnn()
 rand('seed',1);
 setpaths
 fprintf('Loading data ...\n');
-d = load('/home/jklynch/gsoc2013/mothur-evaluate-ml/Stool.0.03.subsample.0.03.filter.combined');       
+%d = load('/home/jlynch/Downloads/Stool.0.03.subsample.0.03.filter.combined');       
+d = load(input_file_path);
 
 xTr = d(1:100,1:end-1)';
 yTr = d(1:100,end)';

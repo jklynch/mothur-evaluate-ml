@@ -50,6 +50,63 @@ def evaluate_svm():
     #evaluate_linear_svm(X, design_data.class_number_for_row)
 
 
+"""
+This function fits a SVM model but no feature selection is done here.  This
+is really just to determine the classification performance.
+"""
+def support_vector_machine(X, y, y_labels, kernel, param_grid):
+    sss = sklearn.cross_validation.StratifiedShuffleSplit(
+        y, test_size=0.5
+    )
+    train_index, test_index = next(iter(sss))
+    X_train = X[train_index, :]
+    X_test = X[test_index, :]
+    y_train = y[train_index]
+    y_test = y[test_index]
+
+    #cv = sklearn.cross_validation.StratifiedKFold(y=y, n_folds=10)
+    clf = sklearn.grid_search.GridSearchCV(
+        sklearn.svm.SVC(kernel=kernel),
+        param_grid=param_grid,
+        verbose=False
+    )
+    clf.fit(
+        X_train,
+        y_train,
+        #cv = sklearn.cross_validation.LeaveOneOut(len(train_index))
+        cv=10
+    )
+
+    print("Best parameters set found on development set:")
+    print('')
+    print(clf.best_estimator_)
+    print('')
+    #print("Grid scores on development set:")
+    #print('')
+    #for params, mean_score, scores in clf.grid_scores_:
+    #    print("%0.3f (+/-%0.03f) for %r" % (
+    #        mean_score, scores.std() / 2, params))
+    #print('')
+
+    print("Detailed classification report for kernel {}:".format(kernel))
+    print('')
+    print("The model is trained on the full development set.")
+    print("The scores are computed on the full evaluation set.")
+    print('')
+    y_true, y_pred = y_test, clf.predict(X_test)
+    print(sklearn.metrics.classification_report(y_true, y_pred, target_names=y_labels))
+    print('')
+    #print("The best {} SVM classifier is: {}".format(kernel, grid.best_estimator_))
+    #print('best classifier score: {}'.format(grid.best_score_))
+
+    #classifier = grid.best_estimator_
+    #print("support_vectors_.shape: {}".format(classifier.support_vectors_.shape))
+    #print("support_.shape: {}".format(classifier.support_.shape))
+    #print("n_support_: {}".format(classifier.n_support_))
+    #print("dual_coef_.shape: {}".format(classifier.dual_coef_.shape))
+    #print("coef_.shape: {}".format(classifier.coef_.shape))
+
+
 def evaluate_linear_svm(X, y):
     print("y.shape {}".format(y.shape))
     # use 10-fold cross validation
@@ -86,58 +143,6 @@ def evaluate_linear_svm(X, y):
     # plot results
     pylab.plot(score_for_C[:,0], score_for_C[:,1])
     pylab.show()
-
-
-"""
-This function fits a SVM model but no feature selection is done here.  This
-is really just to determine the classification performance.
-"""
-def support_vector_machine(X, y, y_labels, kernel, param_grid):
-    sss = sklearn.cross_validation.StratifiedShuffleSplit(
-        y, test_size=0.5
-    )
-    train_index, test_index = next(iter(sss))
-    X_train = X[train_index, :]
-    X_test = X[test_index, :]
-    y_train = y[train_index]
-    y_test = y[test_index]
-
-    #cv = sklearn.cross_validation.StratifiedKFold(y=y, n_folds=10)
-    clf = sklearn.grid_search.GridSearchCV(
-        sklearn.svm.SVC(kernel=kernel),
-        param_grid=param_grid,
-        verbose=False
-    )
-    clf.fit(X_train, y_train, cv=5)
-
-    print("Best parameters set found on development set:")
-    print('')
-    print(clf.best_estimator_)
-    print('')
-    #print("Grid scores on development set:")
-    #print('')
-    #for params, mean_score, scores in clf.grid_scores_:
-    #    print("%0.3f (+/-%0.03f) for %r" % (
-    #        mean_score, scores.std() / 2, params))
-    #print('')
-
-    print("Detailed classification report:")
-    print('')
-    print("The model is trained on the full development set.")
-    print("The scores are computed on the full evaluation set.")
-    print('')
-    y_true, y_pred = y_test, clf.predict(X_test)
-    print(sklearn.metrics.classification_report(y_true, y_pred, target_names=y_labels))
-    print('')
-    #print("The best {} SVM classifier is: {}".format(kernel, grid.best_estimator_))
-    #print('best classifier score: {}'.format(grid.best_score_))
-
-    #classifier = grid.best_estimator_
-    #print("support_vectors_.shape: {}".format(classifier.support_vectors_.shape))
-    #print("support_.shape: {}".format(classifier.support_.shape))
-    #print("n_support_: {}".format(classifier.n_support_))
-    #print("dual_coef_.shape: {}".format(classifier.dual_coef_.shape))
-    #print("coef_.shape: {}".format(classifier.coef_.shape))
 
 
 def rfe(X, y):

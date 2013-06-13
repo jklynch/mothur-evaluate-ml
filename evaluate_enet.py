@@ -52,23 +52,20 @@ def elastic_net(X, y, y_labels, otu_column_names):
     y_train = y[train_index]
     y_test = y[test_index]
    
-    ##############################################################################
-    #n_train = int( 4.0/5.0 * y.shape[0] )
-    #print('n_train: {}'.format(n_train))
     best_model = None
     best_model_score = 0.0
     # I could not get ElasticNetCV to choose the best l1_ratio from a list
     # so I am doing that explictly with a loop
-    for l1_ratio in [.1, .2, .3, .4]:
+    for l1_ratio in [.1, .2, .3, .4, .5, .6, .7, .8, .9]:
         model = sklearn.linear_model.ElasticNetCV(
             l1_ratio=l1_ratio,
-            #cv=sklearn.cross_validation.StratifiedKFold(y[n_train:], 3),
-            cv=5,
+            #cv = sklearn.cross_validation.LeaveOneOut(len(train_index)),
+            cv=5, # having trouble with 10
             verbose=False
         ).fit(X_train, y_train)
         # I think using model.score was the wrong way to go
         model_score_xx = model.score(X_test, y_test)
-        print('built-in model.score: {}'.format(model_score_xx))
+        #print('built-in model.score: {}'.format(model_score_xx))
         test_prediction = model.predict(X_test)
         test_classification = test_prediction.round()
         test_classification_correct = (y_test == test_classification)
@@ -77,23 +74,22 @@ def elastic_net(X, y, y_labels, otu_column_names):
             best_model = model
             best_model_score = model_score
 
-        print('l1_ratio: {}'.format(model.l1_ratio_))
-        print('alpha:    {}'.format(model.alpha_))
-        print('model score: {}'.format(model_score))
-        print('feature ranking by elastic net:')
-        print('   OTU      Rank')
-        enet_top_feature_list = get_enet_top_features(model)
-        for n, (feature_ndx, rank) in enumerate(enet_top_feature_list[:10]):
-            print('{:2d} {} {:4.2f}'.format(n, otu_column_names[feature_ndx], rank))
+        #print('l1_ratio: {}'.format(model.l1_ratio_))
+        #print('alpha:    {}'.format(model.alpha_))
+        #print('model score: {}'.format(model_score))
+    print('feature ranking by elastic net:')
+    print('   OTU      Rank')
+    enet_top_feature_list = get_enet_top_features(best_model)
+    for n, (feature_ndx, rank) in enumerate(enet_top_feature_list[:10]):
+        print('{:2d} {} {:4.2f}'.format(n, otu_column_names[feature_ndx], rank))
 
     y_true, y_pred = y_test, best_model.predict(X_test)
-    print(sklearn.metrics.classification_report(y_true, y_pred))
+    # it helps to make the labels integers
+    print(sklearn.metrics.classification_report([int(y) for y in y_true], [int(y) for y in y_pred], target_names=y_labels))
     print('')
 
     print('best l1_ratio: {}'.format(best_model.l1_ratio_))
     print('best alpha:    {}'.format(best_model.alpha_))
-    print('best model score: {}'.format(best_model_score))
-    print('')
 
 
 def get_enet_top_features(enet_model):
