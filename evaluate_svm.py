@@ -41,20 +41,17 @@ def evaluate_svm():
     degree_range = np.arange(1, 5)
     coef0_range = np.arange(-3.0, 3.0)
 
-    support_vector_machine(X, y, y_labels, "linear", dict(C=C_range))
-    support_vector_machine(X, y, y_labels, "rbf", dict(gamma=gamma_range, C=C_range))
-    support_vector_machine(X, y, y_labels, "poly", dict(C=C_range, degree=degree_range, coef0=coef0_range))
-    #support_vector_machine(X, y, design_data, "sigmoid", dict(C=C_range, coef0=coef0_range))
-
-    #rfe(X, design_data.class_number_for_row[:,0])
-    #evaluate_linear_svm(X, design_data.class_number_for_row)
+    support_vector_machine(X, y, y_labels, "linear", dict(C=C_range), shared_data)
+    support_vector_machine(X, y, y_labels, "rbf", dict(gamma=gamma_range, C=C_range), shared_data)
+    support_vector_machine(X, y, y_labels, "poly", dict(C=C_range, degree=degree_range, coef0=coef0_range), shared_data)
+    support_vector_machine(X, y, y_labels, "sigmoid", dict(C=C_range, coef0=coef0_range), shared_data)
 
 
 """
 This function fits a SVM model but no feature selection is done here.  This
 is really just to determine the classification performance.
 """
-def support_vector_machine(X, y, y_labels, kernel, param_grid):
+def support_vector_machine(X, y, y_labels, kernel, param_grid, shared_data):
     sss = sklearn.cross_validation.StratifiedShuffleSplit(
         y, test_size=0.5
     )
@@ -64,7 +61,6 @@ def support_vector_machine(X, y, y_labels, kernel, param_grid):
     y_train = y[train_index]
     y_test = y[test_index]
 
-    #cv = sklearn.cross_validation.StratifiedKFold(y=y, n_folds=10)
     clf = sklearn.grid_search.GridSearchCV(
         sklearn.svm.SVC(kernel=kernel),
         param_grid=param_grid,
@@ -106,6 +102,9 @@ def support_vector_machine(X, y, y_labels, kernel, param_grid):
     #print("dual_coef_.shape: {}".format(classifier.dual_coef_.shape))
     #print("coef_.shape: {}".format(classifier.coef_.shape))
 
+    if kernel == 'linear':
+        rfe(clf.best_estimator_, X_test, y_test, shared_data.otu_column_names)
+
 
 def evaluate_linear_svm(X, y):
     print("y.shape {}".format(y.shape))
@@ -145,7 +144,44 @@ def evaluate_linear_svm(X, y):
     pylab.show()
 
 
-def rfe(X, y):
+def rfe(trained_svm, X, y, otu_column_names):
+    remaining_otu_list = np.arange(len(otu_column_names))
+
+    removed_feature_list = []
+    while len(remaining_otu_list) > 0:
+        #svc = sklearn.svm.SVC(C=0.01, kernel='linear')
+        trained_svm.fit(X[:, remaining_otu_list], y)
+
+        #w_squared = svc.coef_.sum(axis=0)**2
+        w_squared = (trained_svm.coef_**2).sum(axis=0)
+        w_squared_min_ndx = np.argmin(w_squared)
+        otu_to_remove_ndx = remaining_otu_list[w_squared_min_ndx]
+        otu_to_remove = otu_column_names[otu_to_remove_ndx]
+        #print('removing {}'.format(otu_to_remove))
+        remaining_otu_list = np.delete(remaining_otu_list, w_squared_min_ndx)
+        removed_feature_list.append(otu_to_remove)
+
+    removed_feature_list.reverse()
+
+    # calculate a rank value by removing each feature
+    #trained_svm.fit(X, y)
+    #all_features_score = trained_svm.score_
+    #print('linear SVM score {}'.format(all_features_score))
+    print('features ranked by linear SVM-RFE:')
+    print(' n OTU')
+    for n, otu_name in enumerate(removed_feature_list[:50]):
+        print('{:2d} {}'.format(n, otu_name))
+        #svc = sklearn.svm.SVC(C=0.01, kernel='linear')
+        #otu_ndx = otu_column_names.index(otu_name)
+        #print('otu_ndx for {}: {}'.format(otu_name, otu_ndx))
+        #reduced_otu_list = range(len(otu_column_names))
+        #reduced_otu_list.remove(otu_ndx)
+        #svc.fit(X[:n_train, np.array([1, otu_ndx])], y[:n_train])
+        #score = svc.score(X[n_train:, np.array([1, otu_ndx])], y[n_train:])
+        #print('{:2d} {} {:4.2f}'.format(n, otu_name, all_features_score/score))
+
+
+def rfe_(X, y):
     cv = sklearn.cross_validation.StratifiedKFold(y=y, n_folds=10)
     rfesvm = sklearn.svm.SVC(
         kernel='rbf',
