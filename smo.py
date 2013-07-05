@@ -1,35 +1,22 @@
+import numpy as np
+import pylab as pl
 
 def smo():
     print('hazzah!')
 
-    # we start out with this trivial data
-    x_01 = (0.0, 0.0)
-    x_02 = (0.0, 1.0)
-    x_21 = (2.0, 0.0)
-    x_22 = (2.0, 1.0)
-    labels = []
-    labels.append('blue')
-    labels.append('green')
-    labels.append('blue')
-    labels.append('green')
-    x = []
-    x.append(x_01)
-    x.append(x_21)
-    x.append(x_02)
-    x.append(x_22)
-    #
+    # here is some trivial data
+    x = np.array([[1.0, 3.0],
+             [2.0, 5.0],
+             [3.0, 8.0],
+             [6.0, 4.0],
+             [6.0, 7.0],
+             [7.0, 8.0],
+             [8.0, 4.0],
+             [3.0, 6.0]])
 
-    # here is some different trivial data
-    x = []
-    x.append((1.0, 3.0))
-    x.append((2.0, 5.0))
-    x.append((3.0, 8.0))
-    x.append((6.0, 4.0))
-
-    x.append((6.0, 7.0))
-    x.append((7.0, 8.0))
-    x.append((8.0, 4.0))
-    x.append((3.0, 6.0))
+    mean = x.mean(axis=0)
+    std = x.std(axis=0)
+    x = (x - mean) / std
 
     labels = []
     labels.append('blue')
@@ -52,30 +39,27 @@ def smo():
         label_class[all_labels[1]] = +1.0
     else:
         print('too many labels: '.format(all_labels))
-    y = [label_class[label_i] for label_i in labels]
+
+    # the y column vector gives the class label (-1.0 or +1.0)
+    # for each row of x, so y looks like:
+    #   y = [-1.0 -1.0 ... 1.0 1.0].transpose()
+    y = np.array([label_class[label_i] for label_i in labels]).transpose()
+    print('y = \n{}'.format(y))
     print('i x y label')
     for i in range(len(labels)):
-        print('{} {} {} {}'.format(i, x[i], y[i], labels[i]))
+        print('{} {} {} {}'.format(i, x[i,:], y[i], labels[i]))
 
     # find K
-    K = []
-    for (i, x_i) in enumerate(x):
-        K_i = []
-        for (j, x_j) in enumerate(x):
-            #print('i = {} x_i = {}'.format(i, x_i))
-            #print('j = {} x_j = {}'.format(j, x_j))
-            #K[i][j] = sum( [xik * xjk for xik, xjk in zip(x_i, x_j)] )
-            K_i.append(sum( [xik * xjk for xik, xjk in zip(x_i, x_j)] ))
-        K.append(K_i)
-        print('K = {}'.format(K))
-    for i in range(len(K)):
-        print('K[{}][:]={}'.format(i, K[i]))
+    # x is observations-by-features so we want x*x'
+    K = np.dot(x, x.T)
+    print('K = \n{}'.format(K))
 
     # begin SMO
     # need A and B
-    A = len(y)*[0.0]
-    B = len(y)*[0.0]
-    C = 1.0
+    A = np.zeros(y.shape)
+    print('A = {}'.format(A))
+    B = np.zeros(y.shape)
+    C = 8.0
     for i in range(len(labels)):
         if y[i] == +1.0:
             A[i], B[i] = 0.0, C
@@ -83,8 +67,8 @@ def smo():
             A[i], B[i] = -C, 0.0
 
     # initialize a and g
-    a = len(labels)*[0.0]
-    g = len(labels)*[1.0]
+    a = np.zeros(y.shape[0])
+    g = np.ones(y.shape[0])
     n = 0
     while (True):
         n += 1
@@ -93,23 +77,23 @@ def smo():
         j = None #0
         yg_max = float('-Inf')
         yg_min = float('+Inf')
-        print('A : {}'.format(A))
-        print('B : {}'.format(B))
-        print('y : {}'.format(y))
-        print('a : {}'.format(a))
-        print('g : {}'.format(g))
+        print("A' = {}".format(A.T))
+        print("B' = {}".format(B.T))
+        print("y' = {}".format(y.T))
+        print("a' = {}".format(a.T))
+        print("g' = {}".format(g.T))
         # print ya and yg
-        ya = [yk*ak for (yk, ak) in zip(y, a)]
-        print('ya: {}'.format(ya))
-        yg = [yk*gk for (yk, gk) in zip(y, g)]
-        print('yg: {}'.format(yg))
+        ya = y * a
+        print("ya' = {}".format(ya.T))
+        yg = y * g
+        print("yg' = {}".format(yg.T))
         for k in range(len(y)):
             print('k = {}'.format(k))
             print('  ya[{}] < B[{}]: {} < {} : {}'.format(k, k, ya[k], B[k], ya[k] < B[k]))
             if ya[k] < B[k]:
                 print('x[{}] = {} in I_up'.format(k, x[k]))
                 print('    yg[{}] > yg_max: {} > {} : {}'.format(k, yg[k], yg_max, yg[k] > yg_max))
-                if yg[k] > yg_max: #yg[i]:
+                if yg[k] > yg_max:
                     yg_max = yg[k]
                     i = k
                     print('      i = {}'.format(k))
@@ -117,7 +101,7 @@ def smo():
             if A[k] < ya[k]:
                 print('x[{}] = {} in I_down'.format(k, x[k]))
                 print('    yg[{}] < yg_min: {} < {} : {}'.format(k, yg[k], yg_min, yg[k] < yg_min))
-                if yg[k] < yg_min: #< yg[j]:
+                if yg[k] < yg_min:
                     print('      j = {}'.format(k))
                     yg_min = yg[k]
                     j = k
@@ -126,6 +110,7 @@ def smo():
         print('  i = {} x[{}] = {}'.format(i, i, x[i]))
         print('  j = {} x[{}] = {}'.format(j, j, x[j]))
 
+        # what is a reasonable n to abort?
         #if n > 3:
         #  break
 
@@ -135,21 +120,17 @@ def smo():
             print('optimality criterion has been met')
             break
 
-        # direction search - important to eliminate 0.0 from consideration for lambda
+        # direction search - important to eliminate 0.0 from consideration for lambda???
         u = []
         u_i = B[i] - ya[i]
-        if u_i > 0.0:
-            u.append(u_i)
+        #if u_i > 0.0:
+        u.append(u_i)
         u_j = ya[j] - A[j]
-        if u_j > 0.0:
-            u.append(u_j)
-        u_ij = (yg[i]-yg[j]) / (K[i][i] + K[j][j] - 2.0 * K[i][j])
-        if u_ij > 0.0:
-            u.append(u_ij)
-        print('(yg[{}] - yg[{}])/(K[{}][{}] + K[{}][{}] - 2.0 * K[{}][{}])'.format(i, j, i, i, j, j, i, j))
-        print('({} - {})/({} + {} - 2.0 * {})'.format(yg[i], yg[j], K[i][i], K[j][j], K[i][j]))
-        print('{}'.format((yg[i]-yg[j]) / (K[i][i] + K[j][j] - 2.0 * K[i][j])))
-        #u.append( (yg[i]-yg[j]) / (K[i][i] + K[j][j] - 2.0 * K[i][j]) )
+        #if u_j > 0.0:
+        u.append(u_j)
+        u_ij = (yg[i]-yg[j]) / (K[i,i] + K[j,j] - 2.0 * K[i,j])
+        #if u_ij > 0.0:
+        u.append(u_ij)
         print('directions: {}'.format(u))
         l = min(u)
         print('lambda = {}'.format(l))
@@ -158,22 +139,40 @@ def smo():
         print('K[{}] = {}'.format(i, K[i]))
         print('K[{}] = {}'.format(j, K[j]))
         for k in range(len(g)):
-            #g[k] = g[k] - l*y[k]*K[i][k] + l*y[k]*K[j][k]
-            g[k] += (-l*y[k]*K[i][k] + l*y[k]*K[j][k])
+            g[k] += (-l*y[k]*K[i,k] + l*y[k]*K[j,k])
         # update coefficients
         a[i] = a[i] + l * y[i]
         a[j] = a[j] - l * y[j]
 
     # find the optimal hyperplane
-    w = len(x[0]) * [0.0,]
+    # the weight vector w is w = Sum( a_i*y_i*x_i )
+    print('shape of x[0,:] is {}'.format(x[0,:].shape))
+    w = np.zeros(x[0,:].shape)
     b = None
     for A_i, B_i, a_i, y_i, yg_i, x_i in zip(A, B, a, y, yg, x):
         print('x_i = {}, y_i = {}, a_i = {}, yg_i = {}'.format(x_i, y_i, a_i, yg_i))
         if A_i < a_i < B_i:
             b = yg_i
-        for j, x_ij in enumerate(x_i):
-            w[j] += a_i * y_i * x_ij
+        w += a_i * y_i * x_i
     print('w* = {} b* = {}'.format(w, b))
+
+    x_0_min, x_0_max = x[:,0].min() - 1, x[:,0].max() + 1
+    x_1_min, x_1_max = x[:,1].min() - 1, x[:,1].max() + 1
+    x_0 = np.arange(x_0_min, x_0_max, 0.01)
+    x_1 = np.arange(x_1_min, x_1_max, 0.01)
+    X_0, X_1 = np.meshgrid(x_0, x_1)
+    Z = np.zeros(X_0.shape)
+    for i in range(X_0.shape[0]):
+        for j in range(X_0.shape[1]):
+            Z[i,j] = np.sign(w[0]*X_0[i,j] + w[1]*X_1[i,j] + b)
+
+    # decision surface
+    pl.contourf(X_0, X_1, Z)
+    # support vectors
+    pl.scatter(x[a > 0.0,0], x[a > 0.0,1], s=100)
+    # training data
+    pl.scatter(x[:,0], x[:,1], s=50, c=labels)
+    pl.show()
 
 
 if __name__ == '__main__':
