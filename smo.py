@@ -1,32 +1,18 @@
 import numpy as np
 import pylab as pl
 
-def smo():
+def smo(x, labels):
     print('hazzah!')
 
-    # here is some trivial data
-    x = np.array([[1.0, 3.0],
-             [2.0, 5.0],
-             [3.0, 8.0],
-             [6.0, 4.0],
-             [6.0, 7.0],
-             [7.0, 8.0],
-             [8.0, 4.0],
-             [3.0, 6.0]])
-
-    mean = x.mean(axis=0)
-    std = x.std(axis=0)
+    print('raw data:\n{}'.format(x))
+    mean = np.mean(x, axis=0)
+    std = np.std(x, axis=0, ddof=1)
     x = (x - mean) / std
 
-    labels = []
-    labels.append('blue')
-    labels.append('blue')
-    labels.append('blue')
-    labels.append('blue')
-    labels.append('green')
-    labels.append('green')
-    labels.append('green')
-    labels.append('green')
+    print('mean:\n{}'.format(mean))
+    print('std:\n{}'.format(std))
+    print('normalized data:')
+    print(x)
 
     # we need to assign numeric class labels -1 and +1
     all_labels = list({label_i for label_i in labels})
@@ -39,6 +25,7 @@ def smo():
         label_class[all_labels[1]] = +1.0
     else:
         print('too many labels: '.format(all_labels))
+        raise Exception()
 
     # the y column vector gives the class label (-1.0 or +1.0)
     # for each row of x, so y looks like:
@@ -51,15 +38,15 @@ def smo():
 
     # find K
     # x is observations-by-features so we want x*x'
+    # because K should be observations-by-observations
     K = np.dot(x, x.T)
     print('K = \n{}'.format(K))
 
     # begin SMO
     # need A and B
     A = np.zeros(y.shape)
-    print('A = {}'.format(A))
     B = np.zeros(y.shape)
-    C = 8.0
+    C = 1.0
     for i in range(len(labels)):
         if y[i] == +1.0:
             A[i], B[i] = 0.0, C
@@ -77,8 +64,8 @@ def smo():
         j = None #0
         yg_max = float('-Inf')
         yg_min = float('+Inf')
-        print("A' = {}".format(A.T))
-        print("B' = {}".format(B.T))
+        #print("A' = {}".format(A.T))
+        #print("B' = {}".format(B.T))
         print("y' = {}".format(y.T))
         print("a' = {}".format(a.T))
         print("g' = {}".format(g.T))
@@ -88,21 +75,21 @@ def smo():
         yg = y * g
         print("yg' = {}".format(yg.T))
         for k in range(len(y)):
-            print('k = {}'.format(k))
-            print('  ya[{}] < B[{}]: {} < {} : {}'.format(k, k, ya[k], B[k], ya[k] < B[k]))
+            #print('k = {}'.format(k))
+            #print('  ya[{}] < B[{}]: {} < {} : {}'.format(k, k, ya[k], B[k], ya[k] < B[k]))
             if ya[k] < B[k]:
-                print('x[{}] = {} in I_up'.format(k, x[k]))
-                print('    yg[{}] > yg_max: {} > {} : {}'.format(k, yg[k], yg_max, yg[k] > yg_max))
+                #print('x[{}] = {} in I_up'.format(k, x[k]))
+                #print('    yg[{}] > yg_max: {} > {} : {}'.format(k, yg[k], yg_max, yg[k] > yg_max))
                 if yg[k] > yg_max:
                     yg_max = yg[k]
                     i = k
-                    print('      i = {}'.format(k))
-            print('  A[{}] < ya[{}]: {} < {} : {}'.format(k, k, A[k], ya[k], A[k] < ya[k]))
+                    #print('      i = {}'.format(k))
+            #print('  A[{}] < ya[{}]: {} < {} : {}'.format(k, k, A[k], ya[k], A[k] < ya[k]))
             if A[k] < ya[k]:
-                print('x[{}] = {} in I_down'.format(k, x[k]))
-                print('    yg[{}] < yg_min: {} < {} : {}'.format(k, yg[k], yg_min, yg[k] < yg_min))
+                #print('x[{}] = {} in I_down'.format(k, x[k]))
+                #print('    yg[{}] < yg_min: {} < {} : {}'.format(k, yg[k], yg_min, yg[k] < yg_min))
                 if yg[k] < yg_min:
-                    print('      j = {}'.format(k))
+                    #print('      j = {}'.format(k))
                     yg_min = yg[k]
                     j = k
         print('i = {} j = {}'.format(i, j))
