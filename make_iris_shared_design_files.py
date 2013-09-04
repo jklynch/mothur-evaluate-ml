@@ -21,8 +21,8 @@ def make_files():
 
         shared_headers = ['label', 'Group', 'numOtus']
         shared_headers.extend(['Otu{:02}'.format(n+1) for n in range(iris_feature_count)])
-        # make the column width 10
-        shared_header_line = ' '.join(['{:10}'.format(header) for header in shared_headers])
+        # make the column width 10 with {:10}
+        shared_header_line = '\t'.join(['{}'.format(header) for header in shared_headers])
         write_and_print(shared_header_line, iris_shared_file)
 
         # no header for design file
@@ -30,20 +30,21 @@ def make_files():
 
         for i in range(len(iris_data)):
             target = iris_target[i]
-            shared_label = '{}.{}'.format(i,target)
-            shared_group = '{}'.format(iris_target_names[target])
+            #shared_label = '{}.0'.format(target)
+            shared_label = '1.0'
+            shared_group = '{}.{}'.format(iris_target_names[target],i)
             shared_num_otus = '{}'.format(iris_feature_count)
             otus = ['{}'.format(int(10*feature)) for feature in iris_data[i]]
             shared_line_columns = [shared_label, shared_group, shared_num_otus]
             shared_line_columns.extend(otus)
-            # make the column width 10
-            shared_line = ' '.join(['{:10}'.format(column) for column in shared_line_columns])
+            # make the column width 10 use {:10}
+            shared_line = '\t'.join(['{}'.format(column) for column in shared_line_columns])
             write_and_print(shared_line, iris_shared_file)
 
-            design_group = '{}.{}'.format(iris_target_names[target],i)
-            design_treatment = '{}'.format(target)
-            design_line_columns = [design_group, design_treatment]
-            design_line = ' '.join(['{:10}'.format(column) for column in design_line_columns])
+            ##design_group = '{}.{}'.format(iris_target_names[target],i)
+            design_treatment = '{}'.format(iris_target_names[target])
+            design_line_columns = [shared_group, design_treatment]
+            design_line = '\t'.join(['{}'.format(column) for column in design_line_columns])
             write_and_print(design_line, iris_design_file)
 
 
