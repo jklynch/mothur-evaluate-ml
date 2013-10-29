@@ -1,7 +1,7 @@
 import numpy as np
 import pylab as pl
 
-def smo(x, labels):
+def smo(x, labels, C):
     print('hazzah!')
 
     print('raw data:\n{}'.format(x))
@@ -46,7 +46,7 @@ def smo(x, labels):
     # need A and B
     A = np.zeros(y.shape)
     B = np.zeros(y.shape)
-    C = 1.0
+    ##C = 1.0
     for i in range(len(labels)):
         if y[i] == +1.0:
             A[i], B[i] = 0.0, C
@@ -66,14 +66,14 @@ def smo(x, labels):
         yg_min = float('+Inf')
         #print("A' = {}".format(A.T))
         #print("B' = {}".format(B.T))
-        print("y' = {}".format(y.T))
-        print("a' = {}".format(a.T))
-        print("g' = {}".format(g.T))
+        ##print("y' = {}".format(y.T))
+        ##print("a' = {}".format(a.T))
+        ##print("g' = {}".format(g.T))
         # print ya and yg
         ya = y * a
-        print("ya' = {}".format(ya.T))
+        ##print("ya' = {}".format(ya.T))
         yg = y * g
-        print("yg' = {}".format(yg.T))
+        ##print("yg' = {}".format(yg.T))
         for k in range(len(y)):
             #print('k = {}'.format(k))
             #print('  ya[{}] < B[{}]: {} < {} : {}'.format(k, k, ya[k], B[k], ya[k] < B[k]))
@@ -92,17 +92,17 @@ def smo(x, labels):
                     #print('      j = {}'.format(k))
                     yg_min = yg[k]
                     j = k
-        print('i = {} j = {}'.format(i, j))
-        print('maximal violating pair:')
-        print('  i = {} x[{}] = {}'.format(i, i, x[i]))
-        print('  j = {} x[{}] = {}'.format(j, j, x[j]))
+        ##print('i = {} j = {}'.format(i, j))
+        ##print('maximal violating pair:')
+        ##print('  i = {} x[{}] = {}'.format(i, i, x[i]))
+        ##print('  j = {} x[{}] = {}'.format(j, j, x[j]))
 
         # what is a reasonable n to abort?
-        #if n > 3:
-        #  break
+        if n > 100:
+          break
 
-        print('checking optimality criterion')
-        print('  yg[{}] <= yg[{}]: {} <= {} {}'.format(i, j, yg[i], yg[j], yg[i] <= yg[j]))
+        ##print('checking optimality criterion')
+        ##print('  yg[{}] <= yg[{}]: {} <= {} {}'.format(i, j, yg[i], yg[j], yg[i] <= yg[j]))
         if yg[i] <= yg[j]:
             print('optimality criterion has been met')
             break
@@ -118,13 +118,13 @@ def smo(x, labels):
         u_ij = (yg[i]-yg[j]) / (K[i,i] + K[j,j] - 2.0 * K[i,j])
         #if u_ij > 0.0:
         u.append(u_ij)
-        print('directions: {}'.format(u))
+        ##print('directions: {}'.format(u))
         l = min(u)
-        print('lambda = {}'.format(l))
+        ##print('lambda = {}'.format(l))
 
         # update gradient
-        print('K[{}] = {}'.format(i, K[i]))
-        print('K[{}] = {}'.format(j, K[j]))
+        ##print('K[{}] = {}'.format(i, K[i]))
+        ##print('K[{}] = {}'.format(j, K[j]))
         for k in range(len(g)):
             g[k] += (-l*y[k]*K[i,k] + l*y[k]*K[j,k])
         # update coefficients
@@ -154,12 +154,12 @@ def smo(x, labels):
             Z[i,j] = np.sign(w[0]*X_0[i,j] + w[1]*X_1[i,j] + b)
 
     # decision surface
-    pl.contourf(X_0, X_1, Z)
+    pl.contourf(X_0, X_1, Z, alpha=0.5, cmap=pl.cm.bone)
     # support vectors
-    pl.scatter(x[a > 0.0,0], x[a > 0.0,1], s=100)
+    pl.scatter(x[a > 0.0,0], x[a > 0.0,1], s=100, c='y')
     # training data
-    pl.scatter(x[:,0], x[:,1], s=50, c=labels)
-    pl.show()
+    pl.scatter(x[:,0], x[:,1], s=50, alpha=0.5, c=labels)
+    #pl.show()
 
 
 if __name__ == '__main__':
